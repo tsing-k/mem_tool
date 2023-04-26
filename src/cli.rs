@@ -77,6 +77,21 @@ pub enum Commands {
         #[arg(short, long, value_parser = size_validator)]
         size: usize,
     },
+
+    /// memory dump
+    MD {
+        /// physical address
+        #[arg(short, long, value_parser = addr_validator)]
+        addr: u64,
+
+        /// unit, valid value: 1/2/4/8
+        #[arg(short, long, value_parser = unit_validator)]
+        unit: usize,
+
+        /// unit count
+        #[arg(short, long, value_parser = size_validator)]
+        count: usize,
+    }
 }
 
 const FACTOR_K: usize = 1024;
@@ -122,7 +137,7 @@ fn addr_validator(s: &str) -> anyhow::Result<u64> {
     let addr =  match str2u64(s) {
         Ok(v) => v,
         Err(e) => {
-            return Err(anyhow::format_err!("invalid value \'{s}\', {e}"));
+            return Err(anyhow::format_err!(": {e}"));
         },
     };
 
@@ -148,15 +163,33 @@ fn size_validator(s: &str) -> anyhow::Result<usize> {
     }
 
     if len == 0 {
-        return Err(anyhow::format_err!("invalid value \'{s}\'"));
+        return Err(anyhow::format_err!("no value found"));
     }
 
     let size =  match str2usize(&s[0..len]) {
         Ok(v) => v,
         Err(e) => {
-            return Err(anyhow::format_err!("invalid value \'{s}\', {e}"));
+            return Err(anyhow::format_err!("{e}"));
         },
     };
 
     Ok(size * factor)
+}
+
+fn unit_validator(s: &str) -> anyhow::Result<usize> {
+    match s {
+        "1" | "2" | "4" | "8" => {},
+        _ => {
+            return Err(anyhow::format_err!("please input 1|2|4|8"));
+        },
+    }
+
+    let unit =  match str2usize(s) {
+        Ok(v) => v,
+        Err(e) => {
+            return Err(anyhow::format_err!("{e}"));
+        },
+    };
+
+    Ok(unit)
 }

@@ -22,7 +22,10 @@ fn process_cli(cli: &Cli) -> anyhow::Result<String> {
         },
         Commands::Read { addr, size } => {
             utils::read(addr, size)?;
-        }
+        },
+        Commands::MD { addr, unit, count } => {
+            utils::mem_dump(addr, unit, count)?;
+        },
     }
 
     Ok(String::new())

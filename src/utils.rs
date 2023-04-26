@@ -73,7 +73,7 @@ fn dump(start_addr: u64, bytes: &[u8], unit: u8, unit_count: usize) {
 
     let chars_per_line = 16; // 每行最多显示字符数
     let line_count = (byte_size + chars_per_line - 1) / chars_per_line; // 行数，向上取整
-    let mid_pos = chars_per_line / 2 - 1; // 每行中间位置
+    let mid_pos = chars_per_line / 2; // 每行中间位置，在该位置前多加一个空格
 
     let mut remain_bytes_count = byte_size;
     // 输出显示所有行数据
@@ -88,10 +88,37 @@ fn dump(start_addr: u64, bytes: &[u8], unit: u8, unit_count: usize) {
 
         // 输出行内容
         for i in 0..chars_num {
-            print!("{:02x} ", bytes[start_index + i]);
+            // 中间位置，多输出一个空格
             if i == mid_pos {
-                // 中间位置，多输出一个空格
                 print!(" ");
+            }
+
+            match unit {
+                2 => {
+                    if i % 2 == 0 {
+                        print!("{:02x}{:02x} ", 
+                        bytes[start_index + i + 1], bytes[start_index + i]);
+                    }
+                },
+                4 => {
+                    if i % 4 == 0 {
+                        print!("{:02x}{:02x}{:02x}{:02x} ", 
+                        bytes[start_index + i + 3], bytes[start_index + i + 2], 
+                        bytes[start_index + i + 1], bytes[start_index + i]);
+                    }
+                },
+                8 => {
+                    if i % 8 == 0 {
+                        print!("{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}{:02x} ", 
+                        bytes[start_index + i + 7], bytes[start_index + i + 6], 
+                        bytes[start_index + i + 5], bytes[start_index + i + 4], 
+                        bytes[start_index + i + 3], bytes[start_index + i + 2], 
+                        bytes[start_index + i + 1], bytes[start_index + i]);
+                    }
+                },
+                _ => { // 按照unit为1处理
+                    print!("{:02x} ", bytes[start_index + i]);
+                },
             }
         }
 
@@ -101,8 +128,7 @@ fn dump(start_addr: u64, bytes: &[u8], unit: u8, unit_count: usize) {
     }
 }
 
-pub fn read(addr: u64, number: usize) -> anyhow::Result<()> {
-    let size = number;
+pub fn read(addr: u64, size: usize) -> anyhow::Result<()> {
     anyhow::ensure!(size > 0);
 
     let f = OpenOptions::new().read(true).write(false).open("/dev/mem")?;
@@ -113,7 +139,24 @@ pub fn read(addr: u64, number: usize) -> anyhow::Result<()> {
             .map(&f)?
     };
 
-    dump(addr, &mmap[..], 1, number);
+    dump(addr, &mmap[..], 1, size);
+
+    Ok(())
+}
+
+pub fn mem_dump(addr: u64, unit: usize, count: usize) -> anyhow::Result<()> {
+    let size = unit * count;
+    anyhow::ensure!(size > 0);
+
+    let f = OpenOptions::new().read(true).write(false).open("/dev/mem")?;
+    let mmap = unsafe {
+        MmapOptions::new()
+            .offset(addr)
+            .len(size)
+            .map(&f)?
+    };
+
+    dump(addr, &mmap[..], unit as u8, count);
 
     Ok(())
 }
