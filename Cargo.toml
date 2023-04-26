@@ -1,0 +1,19 @@
+[package]
+name = "mem_tool"
+version = "0.1.0"
+edition = "2021"
+authors = ["duqk"]
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.70"
+clap = { version = "4.2.4", features = ["derive"] }
+memmap = "0.7.0"
+rand = "0.8.5"
+rust-crypto = "0.2.36"
+shadow-rs = "0.21.0"
+
+[build-dependencies]
+shadow-rs = "0.21.0"
