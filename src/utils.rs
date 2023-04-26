@@ -1,4 +1,4 @@
-use std::{fs::{OpenOptions}};
+use std::{fs::{OpenOptions}, cmp::min};
 use memmap::{MmapOptions};
 use crypto::{md5::Md5, digest::Digest};
 
@@ -61,6 +61,46 @@ pub fn clear(addr: u64, size: usize, value: Option<u8>) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn dump(start_addr: u64, bytes: &[u8], unit: u8, unit_count: usize) {
+    let byte_size = unit as usize * unit_count;
+    let end_addr = start_addr + byte_size as u64;
+    let end_addr_hex_str = format!("{:x}", end_addr);
+    let mut addr_max_len = end_addr_hex_str.len();
+    
+    if addr_max_len % 2 == 1 { // 奇数，则+1
+        addr_max_len += 1;
+    }
+
+    let chars_per_line = 16; // 每行最多显示字符数
+    let line_count = (byte_size + chars_per_line - 1) / chars_per_line; // 行数，向上取整
+    let mid_pos = chars_per_line / 2 - 1; // 每行中间位置
+
+    let mut remain_bytes_count = byte_size;
+    // 输出显示所有行数据
+    for line in 0..line_count {
+        // 计算该行数据的首地址
+        let start_index = line * chars_per_line;
+        let addr = start_addr + start_index as u64;
+        let chars_num = min(chars_per_line, remain_bytes_count);
+
+        // 每行开始输出地址
+        print!("{addr:0>addr_max_len$x}: ");
+
+        // 输出行内容
+        for i in 0..chars_num {
+            print!("{:02x} ", bytes[start_index + i]);
+            if i == mid_pos {
+                // 中间位置，多输出一个空格
+                print!(" ");
+            }
+        }
+
+        // 每行结束输出换行符
+        println!();
+        remain_bytes_count -= chars_num;
+    }
+}
+
 pub fn read(addr: u64, number: usize) -> anyhow::Result<()> {
     let size = number;
     anyhow::ensure!(size > 0);
@@ -73,34 +113,7 @@ pub fn read(addr: u64, number: usize) -> anyhow::Result<()> {
             .map(&f)?
     };
 
-    let line_cnt = size as f64 / 16_f64;    // 每行最多显示16个字符
-    let line_cnt = line_cnt.round() as usize;        // 行数
-    for line in 0..(line_cnt - 1) {
-        let start_index = line * 16;
-        print!("0x{:016x}: ", addr + start_index as u64);
-        for column in 0..16 {
-            print!("{:02x} ", mmap[start_index + column]);
-            if column == 7 {
-                print!(" ");  // 中间两个空格
-            }
-        }
-        println!();
-    }
-    // 最后一行
-    let start_index = (line_cnt - 1) * 16;
-    let remain_len = size % 16;
-    if remain_len > 0 {
-        print!("0x{:016x}: ", addr + start_index as u64);
-    }
-    for column in 0..remain_len {
-        print!("{:02x} ", mmap[start_index + column]);
-        if column == 7 {
-            print!(" ");  // 中间两个空格
-        }
-        if column == (remain_len - 1) {
-            println!(); // 最后一行
-        }
-    }
+    dump(addr, &mmap[..], 1, number);
 
     Ok(())
 }
