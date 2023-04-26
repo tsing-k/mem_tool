@@ -160,3 +160,44 @@ pub fn mem_dump(addr: u64, unit: usize, count: usize) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+pub fn mem_set(addr: u64, size: usize, value: u64) -> anyhow::Result<()> {
+    let f = OpenOptions::new().read(true).write(true).open("/dev/mem")?;
+    let mut mmap = unsafe {
+        MmapOptions::new()
+            .offset(addr)
+            .len(size)
+            .map_mut(&f)?
+    };
+
+    match size {
+        1 => {
+            mmap[0] =  (value & 0xff) as u8;
+        },
+        2 => {
+            mmap[0] =  (value & 0x00ff) as u8;
+            mmap[1] = ((value & 0xff00) >> 8) as u8;
+        },
+        4 => {
+            mmap[0] =  (value & 0x000000ff) as u8;
+            mmap[1] = ((value & 0x0000ff00) >> 8) as u8;
+            mmap[2] = ((value & 0x00ff0000) >> 16) as u8;
+            mmap[3] = ((value & 0xff000000) >> 24) as u8;
+        },
+        8 => {
+            mmap[0] =  (value & 0x00000000000000ff) as u8;
+            mmap[1] = ((value & 0x000000000000ff00) >> 8) as u8;
+            mmap[2] = ((value & 0x0000000000ff0000) >> 16) as u8;
+            mmap[3] = ((value & 0x00000000ff000000) >> 24) as u8;
+            mmap[4] = ((value & 0x000000ff00000000) >> 32) as u8;
+            mmap[5] = ((value & 0x0000ff0000000000) >> 40) as u8;
+            mmap[6] = ((value & 0x00ff000000000000) >> 48) as u8;
+            mmap[7] = ((value & 0xff00000000000000) >> 56) as u8;
+        },
+        _ => {
+            return Err(anyhow::format_err!("invalid size \'{size}\', please input --help to get usage"));
+        },
+    }
+
+    Ok(())
+}

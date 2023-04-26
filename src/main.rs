@@ -26,6 +26,10 @@ fn process_cli(cli: &Cli) -> anyhow::Result<String> {
         Commands::MD { addr, unit, count } => {
             utils::mem_dump(addr, unit, count)?;
         },
+        Commands::MS { addr, size, value } => {
+            utils::mem_set(addr, size, value)?;
+            println!("memory set success")
+        }
     }
 
     Ok(String::new())

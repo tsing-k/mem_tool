@@ -84,14 +84,29 @@ pub enum Commands {
         #[arg(short, long, value_parser = addr_validator)]
         addr: u64,
 
-        /// unit, valid value: 1/2/4/8
+        /// unit, valid value: 1|2|4|8
         #[arg(short, long, value_parser = unit_validator)]
         unit: usize,
 
         /// unit count
         #[arg(short, long, value_parser = size_validator)]
         count: usize,
-    }
+    },
+
+    /// memory set
+    MS {
+        /// physical address
+        #[arg(short, long, value_parser = addr_validator)]
+        addr: u64,
+
+        /// size, valid value: 1|2|4|8
+        #[arg(short, long, value_parser = unit_validator)]
+        size: usize,
+
+        /// set value
+        #[arg(short, long, value_parser = addr_validator)]
+        value: u64,
+    },
 }
 
 const FACTOR_K: usize = 1024;
