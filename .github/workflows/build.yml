@@ -24,10 +24,10 @@ jobs:
         with:
           RUSTTARGET: ${{ matrix.target }}
           EXTRA_FILES: "README.md"
-          SRC_DIR: "hello"
+          SRC_DIR: "src"
           ARCHIVE_TYPES: ${{ matrix.archive }}
-          PRE_BUILD: "pre_build.sh"
-          POST_BUILD: "test/post_build.sh"
+          PRE_BUILD: ""
+          POST_BUILD: ""
           MINIFY: "yes"
   release_without_not_required:
     name: release ${{ matrix.target }}
@@ -44,4 +44,4 @@ jobs:
           RUSTTARGET: ${{ matrix.target }}
           UPLOAD_MODE: none
       - name: Checkout output
-        run: ls -laR
+        run: ls -laR output/ target/
